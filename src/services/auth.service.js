@@ -49,35 +49,31 @@ const loginWithGoogle = async (googleProfile) => {
   const { id: googleId, displayName: name, emails } = googleProfile;
   const email = emails[0].value;
 
-  let user = await userService.getUserByGoogleId(googleId);
+  let user = await userService.getUserByEmail(email);
+  // let user = await userService.getUserByGoogleId(googleId);
   if (user) {
-    return user;
+    // If user exists but doesn't have googleId, update it
+    if (!user.googleId) {
+      user.googleId = googleId;
+      user.isEmailVerified = true;
+      await user.save();
+    }
+  } else {
+    // Create new user with Google details
+    user = await userService.createUser({
+      googleId,
+      name,
+      email,
+      isEmailVerified: true,
+    });
   }
 
-  // Jika pengguna dengan email yang sama sudah ada (mungkin daftar via email), tautkan akun
-  user = await userService.getUserByEmail(email);
-  if (user) {
-    user.googleId = googleId;
-    user.isEmailVerified = true;
-    await user.save();
-    return user;
-  }
-
-  // Jika tidak, buat pengguna baru
-  const newUser = await userService.createUser({
-    googleId,
-    name,
-    email,
-    isEmailVerified: true,
-    role: "user",
-    // Password tidak diperlukan
-  });
-  return newUser;
+  return user;
 };
 
 module.exports = {
   loginUserWithEmailAndPassword,
   logout,
   refreshAuth,
-  loginWithGoogle, // BARU
+  loginWithGoogle,
 };
