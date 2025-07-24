@@ -3,6 +3,7 @@ const helmet = require("helmet");
 const cors = require("cors");
 const httpStatus = require("http-status");
 const config = require("./config");
+const routes = require("./routes");
 const {
   errorConverter,
   errorHandler,
@@ -36,12 +37,17 @@ app.use(passport.initialize());
 passport.use("jwt", jwtStrategy);
 passport.use("google", googleStrategy);
 
+app.use("/api/v1", routes);
+
 // Send back a 404 error for any unknown api request
 app.use((req, res, next) => {
   next(new ApiError(httpStatus.NOT_FOUND, "Not found"));
 });
 
+// Convert error to ApiError
 app.use(errorConverter);
+
+// Handle error
 app.use(errorHandler);
 
 module.exports = app;
